@@ -5,7 +5,7 @@ function showTrainModel() {
     arrow.css('margin', '-8px 0px 3px');
     var train_code = $(this).attr('data-trainno');
     var model = getTrainModel(train_code);
-    var label = $('<div>').text(model? model[0]: '');
+    var label = $('<div>').html(model? model[0]: '&nbsp;');
     label.addClass('ticket-duration').insertBefore(arrow);
     return (!model)? 1: model[1]? 2: 3;
 }
@@ -20,8 +20,8 @@ function showTrainDetails() {
         var url = 'https://moerail.ml/img/' + train_code + '.png';
         var img = $('<img>').attr('src', url);
         var link = $('<a>').attr('href', url);
-        img.width('100%').addClass('seat-item').appendTo(link);
-        link.insertAfter(this);
+        img.width('100%').css('border-top', '1px solid #e0e0e0');
+        link.css('display', 'block').append(img).insertAfter(this);
     }
     $('.-detail-title').text(train_code + ' (' + model[0] + ')');
 }
@@ -40,26 +40,25 @@ function checkPage(trains_list) {
     }));
 }
 
-function checkDetailsPage() {
-    var train_details = $('.ticket-line');
-    console.warn(typeof train_details.text());
-    if (train_details.length) {
-        return train_details.each(showTrainDetails);
-    }
-}
-
 // Register the event listener
 function main() {
     $('#download').remove();
-    var trains_list = $('#searchSingleTicketResultList');
-    if (!trains_list.length) {
-        return;
+    var details = $('.-detail-date');
+    if (details.length) {
+        $('.ticket-line').each(showTrainDetails);
+        var observer = new MutationObserver(function() {
+            return $('.ticket-line').each(showTrainDetails);
+        });
+        observer.observe(details[0], {childList: true});
     }
-    checkPage(trains_list);
-    var observer = new MutationObserver(function() {
-        return checkPage(trains_list);
-    });
-    observer.observe(trains_list[0], {childList: true});
+    var trains_list = $('#searchSingleTicketResultList');
+    if (trains_list.length) {
+        checkPage(trains_list);
+        var observer = new MutationObserver(function() {
+            return checkPage(trains_list);
+        });
+        observer.observe(trains_list[0], {childList: true});
+    }
 }
 
-main();
+$(main);
