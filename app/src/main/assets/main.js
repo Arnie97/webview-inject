@@ -10,6 +10,22 @@ function showTrainModel() {
     return (!model)? 1: model[1]? 2: 3;
 }
 
+// Patch items on the details page
+function showTrainDetails() {
+    var train_code = $(this).find('.ticket-no').text();
+    var model = getTrainModel(train_code);
+    if (!model) {
+        return;
+    } else if (model[1]) {
+        var url = 'https://moerail.ml/img/' + train_code + '.png';
+        var img = $('<img>').attr('src', url);
+        var link = $('<a>').attr('href', url);
+        img.width('100%').addClass('seat-item').appendTo(link);
+        link.insertAfter(this);
+    }
+    $('.-detail-title').text(train_code + ' (' + model[0] + ')');
+}
+
 // Iterate through the items
 function checkPage(trains_list) {
     var result = trains_list.children().map(showTrainModel);
@@ -24,8 +40,17 @@ function checkPage(trains_list) {
     }));
 }
 
+function checkDetailsPage() {
+    var train_details = $('.ticket-line');
+    console.warn(typeof train_details.text());
+    if (train_details.length) {
+        return train_details.each(showTrainDetails);
+    }
+}
+
 // Register the event listener
 function main() {
+    $('#download').remove();
     var trains_list = $('#searchSingleTicketResultList');
     if (!trains_list.length) {
         return;
