@@ -8,8 +8,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 
-import java.io.InputStream;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.Scanner;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -46,18 +47,16 @@ public class MainActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
-    public byte[] readAssets(String fileName) throws IOException {
-        InputStream inputStream = getAssets().open(fileName);
-        byte[] buffer = new byte[inputStream.available()];
-        inputStream.read(buffer);
-        inputStream.close();
-        return buffer;
+    public String readAssets(String fileName) throws IOException {
+        Scanner scanner = new Scanner(getAssets().open(fileName));
+        return scanner.useDelimiter("\\Z").next();
     }
 
     public void injectScript(String fileName) {
         try {
-            String loader = new String(readAssets("loader.js"));
-            String encoded = Base64.encodeToString(readAssets(fileName), Base64.NO_WRAP);
+            String loader = readAssets("loader.js");
+            String uriEncoded = URLEncoder.encode(readAssets(fileName)).replace("+", "%20");
+            String encoded = Base64.encodeToString(uriEncoded.getBytes(), Base64.NO_WRAP);
             webView.loadUrl(String.format("javascript: (%s)('%s');", loader, encoded));
         } catch (Exception e) {
             e.printStackTrace();
