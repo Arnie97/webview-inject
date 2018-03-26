@@ -24,10 +24,11 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                injectScript("monkey.js");
-                injectScript("models.js");
-                injectScript("emu.user.js");
-                injectScript("main.js");
+                injectScript("monkey.js", true);
+                injectScript("models.js", true);
+                injectScript("emu.user.js", true);
+                injectScript("main.js", true);
+                injectScript("https://s.url.cn/qqun/qun/qqweb/m/qun/confession/js/vconsole.min.js");
                 super.onPageFinished(view, url);
             }
         });
@@ -52,12 +53,22 @@ public class MainActivity extends Activity {
         return scanner.useDelimiter("\\Z").next();
     }
 
-    public void injectScript(String fileName) {
+    public void injectScript(String source) {
+        injectScript(source, false);
+    }
+
+    public void injectScript(String source, boolean inline) {
         try {
+            final String url = "javascript: (%s)('%s', '%s');";
             String loader = readAssets("loader.js");
-            String uriEncoded = URLEncoder.encode(readAssets(fileName)).replace("+", "%20");
-            String encoded = Base64.encodeToString(uriEncoded.getBytes(), Base64.NO_WRAP);
-            webView.loadUrl(String.format("javascript: (%s)('%s');", loader, encoded));
+            if (inline) {
+                String encoded = URLEncoder.encode(readAssets(source));
+                encoded = encoded.replace("+", "%20");
+                encoded = Base64.encodeToString(encoded.getBytes(), Base64.NO_WRAP);
+                webView.loadUrl(String.format(url, loader, "", encoded));
+            } else {
+                webView.loadUrl(String.format(url, loader, source, ""));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
