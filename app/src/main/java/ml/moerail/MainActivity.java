@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Base64;
 import android.view.KeyEvent;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
@@ -28,13 +29,16 @@ public class MainActivity extends Activity {
                 injectScript("models.js", true);
                 injectScript("emu.user.js", true);
                 injectScript("main.js", true);
-                injectScript("https://s.url.cn/qqun/qun/qqweb/m/qun/confession/js/vconsole.min.js");
+                // injectScript("https://s.url.cn/qqun/qun/qqweb/m/qun/confession/js/vconsole.min.js");
                 super.onPageFinished(view, url);
             }
         });
         webView.setWebChromeClient(new WebChromeClient());
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
+        WebSettings settings = webView.getSettings();
+        String userAgent = " Moerail/" + BuildConfig.VERSION_NAME;
+        settings.setUserAgentString(settings.getUserAgentString() + userAgent);
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
 
         webView.loadUrl("https://mobile.12306.cn/weixin");
     }
