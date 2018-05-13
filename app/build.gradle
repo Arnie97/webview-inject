@@ -6,8 +6,8 @@ android {
         applicationId "ml.moerail"
         minSdkVersion 21
         targetSdkVersion 27
-        versionCode 2
-        versionName "2018.05.04"
+        versionCode 3
+        versionName "2018.05.13"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

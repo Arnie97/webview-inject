@@ -25,11 +25,11 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                injectScript("monkey.js", true);
-                injectScript("models.js", true);
                 injectScript("emu.user.js", true);
                 injectScript("main.js", true);
-                // injectScript("https://s.url.cn/qqun/qun/qqweb/m/qun/confession/js/vconsole.min.js");
+                if (BuildConfig.DEBUG) {
+                    injectScript("https://s.url.cn/qqun/qun/qqweb/m/qun/confession/js/vconsole.min.js");
+                }
                 super.onPageFinished(view, url);
             }
         });

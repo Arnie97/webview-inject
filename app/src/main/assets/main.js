@@ -41,7 +41,11 @@ function checkPage(trains_list) {
 }
 
 // Register the event listener
-function main() {
+function main(json_object) {
+    models = json_object;
+    patterns = models[':'] || {};
+    delete models[':'];
+
     $('#download').remove();
     var details = $('.-detail-date');
     if (details.length) {
@@ -61,4 +65,4 @@ function main() {
     }
 }
 
-$(main);
+$.getJSON('https://moerail.ml/models.json', main);
