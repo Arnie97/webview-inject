@@ -2,7 +2,6 @@ package ml.moerail;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Base64;
 import android.view.KeyEvent;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -10,7 +9,6 @@ import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.Scanner;
 
 public class MainActivity extends Activity {
@@ -25,11 +23,8 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                injectScript("emu.user.js", true);
-                injectScript("main.js", true);
-                if (BuildConfig.DEBUG) {
-                    injectScript("https://s.url.cn/qqun/qun/qqweb/m/qun/confession/js/vconsole.min.js");
-                }
+                injectScript("emu.user.js");
+                injectScript("main.js");
                 super.onPageFinished(view, url);
             }
         });
@@ -57,22 +52,9 @@ public class MainActivity extends Activity {
         return scanner.useDelimiter("\\Z").next();
     }
 
-    public void injectScript(String source) {
-        injectScript(source, false);
-    }
-
-    public void injectScript(String source, boolean inline) {
+    public void injectScript(String fileName) {
         try {
-            final String url = "javascript: (%s)('%s', '%s');";
-            String loader = readAssets("loader.js");
-            if (inline) {
-                String encoded = URLEncoder.encode(readAssets(source));
-                encoded = encoded.replace("+", "%20");
-                encoded = Base64.encodeToString(encoded.getBytes(), Base64.NO_WRAP);
-                webView.loadUrl(String.format(url, loader, "", encoded));
-            } else {
-                webView.loadUrl(String.format(url, loader, source, ""));
-            }
+            webView.evaluateJavascript(readAssets(fileName), null);
         } catch (Exception e) {
             e.printStackTrace();
         }
