@@ -46,7 +46,6 @@ function main(json_object) {
     patterns = models[':'] || {};
     delete models[':'];
 
-    $('#download').remove();
     var details = $('.-detail-date');
     if (details.length) {
         $('.ticket-line').each(showTrainDetails);
@@ -65,4 +64,38 @@ function main(json_object) {
     }
 }
 
-$.getJSON('https://moerail.ml/models.json', main);
+// Optimize page layouts
+function customize() {
+    var bgc = 'background-color';
+    $('.ui-header').css(bgc, $('.station-search').css(bgc));
+    $('#download').remove();
+
+    // change the default date to tomorrow
+    if (!sessionStorage.getItem('departTime')) {
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        $('#JpSearchMonthWeek').text(tomorrow.kxString());
+    }
+
+    var option_list = $('#traintypelist');
+    if (!option_list.length) {  // not the index page
+        return $.getJSON('https://moerail.ml/models.json', main);
+    }
+    var option = option_list.children().last();
+    option_list.empty();
+    var types = {
+        QB: '全部',
+        GDC: '动车',
+        Z: '直特',
+        T: '特快',
+        K: '快速',
+        QT: '其他',
+    };
+    for (var key in types) {
+        option = option.clone().attr('data-value', key).text(types[key]);
+        option_list.append(option);
+    }
+    selectTrainType(option_list.children()[0]);
+}
+
+customize();
