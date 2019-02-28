@@ -40,7 +40,15 @@ function checkPage(trains_list) {
     }));
 }
 
-// Register the event listener
+// Event handler for the back button: try to close date or city pickers
+function goBack() {
+    var visible_back_button = $('.ui-header-back>a').filter(function(i) {
+        return this.clientWidth;
+    });
+    return visible_back_button.click().length;
+}
+
+// Watch for DOM tree changes
 function main(json_object) {
     models = json_object;
     patterns = models[':'] || {};

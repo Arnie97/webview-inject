@@ -3,6 +3,7 @@ package ml.moerail;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -40,11 +41,22 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (webView.canGoBack() && keyCode == KeyEvent.KEYCODE_BACK) {
-            webView.goBack();
-            return true;
+        if (keyCode != KeyEvent.KEYCODE_BACK) {  // ignore other keys
+            return super.onKeyDown(keyCode, event);
         }
-        return super.onKeyDown(keyCode, event);
+        webView.evaluateJavascript("goBack()", new ValueCallback<String>() {
+            @Override
+            public void onReceiveValue(String pickerClosed) {
+                if (pickerClosed.equals("1")) {
+                    // the date or city picker was closed by the back button
+                } else if (webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    finish();  // can not go back any more, so exit the app
+                }
+            }
+        });
+        return true;
     }
 
     public String readAssets(String fileName) throws IOException {
