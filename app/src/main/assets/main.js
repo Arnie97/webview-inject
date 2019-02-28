@@ -12,6 +12,7 @@ function showTrainModel() {
 
 // Patch items on the details page
 function showTrainDetails() {
+    showTerminalStations();
     var train_code = $(this).find('.ticket-no').text();
     var model = getTrainModel(train_code);
     if (!model) {
@@ -24,6 +25,25 @@ function showTrainDetails() {
         link.css('display', 'block').append(img).insertAfter(this);
     }
     $('.-detail-title').text(train_code + ' (' + model[0] + ')');
+}
+
+// Show the first and the last station in the timetable on the diagram
+function showTerminalStations() {
+    var cells = $('.TnListLiTx span');
+    if (!cells.length) {
+        return;
+    }
+    cells.at = function(index) {
+        return this[index < 0? index + this.length: index];
+    };
+    showStation(cells, 0, 2, '.from-station');
+    showStation(cells, -4, -3, '.to-station');
+}
+
+function showStation(cells, name, time, selector) {
+    var tag = cells.at(name).lastChild.textContent;
+    tag += '<br>' + cells.at(time).textContent;
+    $(selector).css('top', '-36px').html(tag);
 }
 
 // Iterate through the items
@@ -54,7 +74,7 @@ function main(json_object) {
     patterns = models[':'] || {};
     delete models[':'];
 
-    var details = $('.-detail-date');
+    var details = $('.TnListInfo');
     if (details.length) {
         $('.ticket-line').each(showTrainDetails);
         var observer = new MutationObserver(function() {
