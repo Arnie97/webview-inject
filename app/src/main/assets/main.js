@@ -1,30 +1,62 @@
-// Patch items on the web page
-// Return 1 for unknown trains, 2 for found ones and 3 for inferred ones
-function showTrainModel() {
-    var arrow = $(this).find('.ticket-right-arrow');
+var colors = [
+    ['#F80', /CRH6/],
+    ['#C01', /AF/],
+    ['#C84', /BF/],
+    ['#080', /J/],
+    ['#39d', /CR/],
+];
+
+// Patch items on the list page
+function showTrainModel(node, info) {
+    var arrow = $(node).find('.ticket-right-arrow');
     arrow.css('margin', '-8px 0px 3px');
-    var train_code = $(this).attr('data-trainno');
-    var model = getTrainModel(train_code);
-    var label = $('<div>').html(model? model[0]: '&nbsp;');
+    var label = $('<div>').text(info.emu_no);
     label.addClass('ticket-duration').insertBefore(arrow);
-    return (!model)? 1: model[1]? 2: 3;
+    colors.some(function(pair) {
+        if (pair[1].test(info.emu_no)) {
+            label.css('color', pair[0]);
+            return true;
+        }
+    });
 }
 
 // Patch items on the details page
 function showTrainDetails() {
     showTerminalStations();
-    var train_code = $(this).find('.ticket-no').text();
-    var model = getTrainModel(train_code);
-    if (!model) {
+    var trainNumber = $('.ticket-no').text();
+    if (trainNumber === '--') {
         return;
-    } else if (model[1]) {
-        var url = 'https://moerail.ml/img/' + train_code + '.png';
-        var img = $('<img>').attr('src', url);
-        var link = $('<a>').attr('href', url);
-        img.width('100%').css('border-top', '1px solid #e0e0e0');
-        link.css('display', 'block').append(img).insertAfter(this);
     }
-    $('.-detail-title').text(train_code + ' (' + model[0] + ')');
+
+    var url = 'https://api.moerail.ml/train/' + trainNumber;
+    $.getJSON(url, function(results) {
+        var tableCell = function(text) {
+            return $('<div>').addClass('TnListTx_1').text(text).css('padding-left', '7px');
+        };
+        var table = $('<ul>').addClass('TnListInfo').append(
+            $('<li>').addClass('TnListHd').append(
+                tableCell('日期'),
+                tableCell('车底'))).appendTo('.detail-scroller');
+
+        results.forEach(function(info) {
+            var match = info.emu_no.match(/^(\w+)(\d{4})$/);
+            if (match) {
+                info.emu_no = match[1] + "-" + match[2];
+            }
+
+            var url = 'https://moerail.ml/#' + info.emu_no;
+            $('<li>').addClass('TnListLiTx').append(
+                tableCell(info.date),
+                $('<a>').attr('href', url).append(tableCell(info.emu_no))
+            ).appendTo(table);
+        });
+
+        if (results.length) {
+            $('.-detail-title').text(trainNumber + ' (' + results[0].emu_no + ')');
+        }
+
+        $('.seat-price-detail').empty();
+    });
 }
 
 // Show the first and the last station in the timetable on the diagram
@@ -47,33 +79,45 @@ function showStation(cells, name, time, selector) {
 }
 
 // Iterate through the items
-function checkPage(trains_list) {
-    var result = trains_list.children().map(showTrainModel);
-    var count = [result.length, 0, 0, 0];
-    result.each(function(i, x) {
-        count[x]++;
-    });
-
-    var msg = 'EMU Tools: {0} checked, {2} found, {3} inferred';
-    console.log(msg.replace(/{(\d+)}/g, function(match, number) {
-        return count[number];
+function checkPage(trainList) {
+    var trainNodes = trainList.children();
+    var trainNumbers = Array.from(trainNodes.map(function(index, node) {
+        return $(node).attr('data-trainno');
     }));
+
+    popLoading();
+
+    var url = 'https://api.moerail.ml/train/,' + trainNumbers.join(',');
+    $.getJSON(url, function(results) {
+        console.log('EMU Tools: ' + results.length + '/' + trainNumbers.length + ' found');
+
+        // Convert array to map
+        var trains = {};
+        results.forEach(function(info) {
+            trains[info.train_no] = info;
+        });
+
+        trainNodes.each(function(index, node) {
+            var info = trains[trainNumbers[index]];
+            if (info) {
+                showTrainModel(node, info);
+            }
+        });
+
+        cancelLoading();
+    });
 }
 
 // Event handler for the back button: try to close date or city pickers
 function goBack() {
-    var visible_back_button = $('.ui-header-back>a').filter(function(i) {
+    var backButton = $('.ui-header-back>a').filter(function(i) {
         return this.clientWidth;
     });
-    return visible_back_button.click().length;
+    return backButton.click().length;
 }
 
 // Watch for DOM tree changes
-function main(json_object) {
-    models = json_object;
-    patterns = models[':'] || {};
-    delete models[':'];
-
+function main() {
     var details = $('.TnListInfo');
     if (details.length) {
         $('.ticket-line').each(showTrainDetails);
@@ -82,13 +126,14 @@ function main(json_object) {
         });
         observer.observe(details[0], {childList: true});
     }
-    var trains_list = $('#searchSingleTicketResultList');
-    if (trains_list.length) {
-        checkPage(trains_list);
+
+    var trainList = $('#searchSingleTicketResultList');
+    if (trainList.length) {
+        checkPage(trainList);
         var observer = new MutationObserver(function() {
-            return checkPage(trains_list);
+            return checkPage(trainList);
         });
-        observer.observe(trains_list[0], {childList: true});
+        observer.observe(trainList[0], {childList: true});
     }
 }
 
@@ -105,12 +150,12 @@ function customize() {
         $('#JpSearchMonthWeek').text(tomorrow.kxString());
     }
 
-    var option_list = $('#traintypelist');
-    if (!option_list.length) {  // not the index page
-        return $.getJSON('https://moerail.ml/models.json', main);
+    var trainTypes = $('#traintypelist');
+    if (!trainTypes.length) {  // not the index page
+        return main();
     }
-    var option = option_list.children().last();
-    option_list.empty();
+    var option = trainTypes.children().last();
+    trainTypes.empty();
     var types = {
         QB: '全部',
         GDC: '动车',
@@ -121,9 +166,9 @@ function customize() {
     };
     for (var key in types) {
         option = option.clone().attr('data-value', key).text(types[key]);
-        option_list.append(option);
+        trainTypes.append(option);
     }
-    selectTrainType(option_list.children()[0]);
+    selectTrainType(trainTypes.children()[1]);
 }
 
 customize();

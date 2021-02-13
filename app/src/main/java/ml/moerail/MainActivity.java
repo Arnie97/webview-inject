@@ -24,7 +24,6 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                injectScript("emu.user.js");
                 injectScript("main.js");
                 super.onPageFinished(view, url);
             }
