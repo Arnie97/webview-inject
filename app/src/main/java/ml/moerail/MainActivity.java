@@ -1,7 +1,10 @@
 package ml.moerail;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
@@ -9,10 +12,20 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 
+import com.androidyuan.aesjni.AESEncrypt;
+import com.king.zxing.CaptureActivity;
+import com.king.zxing.Intents;
+
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Scanner;
 
 public class MainActivity extends Activity {
+    public static final int REQUEST_CODE_SCAN = 1;
+    public static final int REQUEST_CODE_PHOTO = 2;
+    public static final String KEY_IS_QR_CODE = "key_code";
+    private static final String LOG_TAG_SCANNER = "scanner";
+
     private WebView webView;
 
     @Override
@@ -40,6 +53,12 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            Intent intent = new Intent(this, CaptureActivity.class);
+            intent.putExtra(KEY_IS_QR_CODE, true);
+            startActivityForResult(intent, REQUEST_CODE_SCAN);
+            return true;
+        }
         if (keyCode != KeyEvent.KEYCODE_BACK) {  // ignore other keys
             return super.onKeyDown(keyCode, event);
         }
@@ -68,6 +87,34 @@ public class MainActivity extends Activity {
             webView.evaluateJavascript(readAssets(fileName), null);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void showResult(String text) {
+        Log.d(LOG_TAG_SCANNER, text);
+        if (TextUtils.isDigitsOnly(text) && text.length() == 144) {
+            try {
+                int year = Calendar.getInstance().get(Calendar.YEAR);
+                byte[] decodedBytes = AESEncrypt.tkdecode(getApplicationContext(), text, year);
+                text = new String(decodedBytes, 0, decodedBytes.length, "gb18030");
+                Log.d(LOG_TAG_SCANNER, text);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        final String js = String.format("printTicketInfo('%s');", text);
+        webView.evaluateJavascript(js, null);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK || data == null) {
+            return;
+        }
+
+        if (requestCode == REQUEST_CODE_SCAN) {
+            showResult(data.getStringExtra(Intents.Scan.RESULT));
         }
     }
 }

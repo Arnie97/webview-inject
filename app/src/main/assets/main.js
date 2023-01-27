@@ -116,6 +116,22 @@ function goBack() {
     return backButton.click().length;
 }
 
+function printTicketInfo(info) {
+    if (info && info.length >= 110) {
+        var delimiters = [
+            00, 00, 07, 10, 13,
+            16, 16, 24, 26, 27, 29,
+            33, 33, 38, 46, 47, 49,
+            50, 50, 60,
+            68, 68, 70, 72, 90, -7
+        ];
+        info = delimiters.map(function(element, index, array) {
+            return info.slice(array[index], array[index+1]) || '<hr>';
+        }).join(' ');
+    }
+    $('.bottom-tips').html(info);
+}
+
 // Watch for DOM tree changes
 function main() {
     var details = $('.TnListInfo');
@@ -141,7 +157,7 @@ function main() {
 function customize() {
     var bgc = 'background-color';
     $('.ui-header').css(bgc, $('.station-search').css(bgc));
-    $('#download').remove();
+    $('.bottom-tips').html(null);
 
     // change the default date to tomorrow
     if (!sessionStorage.getItem('departTime')) {
