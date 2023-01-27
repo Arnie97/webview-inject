@@ -5,7 +5,7 @@ android {
     defaultConfig {
         applicationId "ml.moerail"
         minSdkVersion 19
-        targetSdkVersion 33
+        targetSdkVersion 22
         versionCode 6
         versionName "2023.01.20"
         ndk {
@@ -19,9 +19,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    lintOptions {
+        abortOnError false
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: "src/main/jniLibs")
     implementation "com.king.zxing:zxing-lite:1.1.9"
 }
