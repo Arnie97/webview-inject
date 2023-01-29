@@ -54,8 +54,6 @@ function showTrainDetails() {
         if (results.length) {
             $('.-detail-title').text(trainNumber + ' (' + results[0].emu_no + ')');
         }
-
-        $('.seat-price-detail').empty();
     });
 }
 
@@ -132,59 +130,91 @@ function printTicketInfo(info) {
     $('.bottom-tips').html(info);
 }
 
-// Watch for DOM tree changes
-function main() {
-    var details = $('.TnListInfo');
-    if (details.length) {
+// Optimize page layouts
+function customize() {
+    var page = location.pathname.match(/\w+$/) || [];
+    switch (page[0]) {
+    case 'init':
+        var trainTypes = $('#traintypelist');
+        var option = trainTypes.children().last();
+        trainTypes.empty();
+
+        var moreTypes = {
+            QB: '全部',
+            GDC: '动车',
+            Z: '直特',
+            T: '特快',
+            K: '快速',
+            QT: '其他',
+        };
+        for (var key in moreTypes) {
+            option.
+                clone().
+                attr('data-value', key).
+                text(moreTypes[key]).
+                appendTo(trainTypes);
+        }
+        selectTrainType(trainTypes.children()[1]);
+        // fallthrough
+
+    case 'initCC':
+        // change the default date to tomorrow
+        if (!sessionStorage.getItem('departTime')) {
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            $('#JpSearchMonthWeek').text(tomorrow.kxString());
+            $('#J_no').val('24000000G10I');
+        }
+        break;
+
+    case 'ysqcx':
+    case 'qssj':
+        $('<iframe>').
+            attr('src', 'ysqcx').
+            addClass('ui-header').
+            height(200).
+            insertBefore('.query-page>:first-child').
+            on('load', function() {
+                var innerDoc = $(this.contentDocument);
+                innerDoc.find('.footerNav').remove();
+                innerDoc.find('.ui-title').addClass('top-prompt-contain');
+            });
+        break;
+
+    case 'detail':
+    case 'showcc':
+        var details = $('.TnListInfo');
         $('.ticket-line').each(showTrainDetails);
         var observer = new MutationObserver(function() {
             return $('.ticket-line').each(showTrainDetails);
         });
         observer.observe(details[0], {childList: true});
-    }
+        break;
 
-    var trainList = $('#searchSingleTicketResultList');
-    if (trainList.length) {
+    case 'query':
+        var trainList = $('#searchSingleTicketResultList');
         checkPage(trainList);
         var observer = new MutationObserver(function() {
             return checkPage(trainList);
         });
         observer.observe(trainList[0], {childList: true});
-    }
-}
+        break;
 
-// Optimize page layouts
-function customize() {
-    var bgc = 'background-color';
-    $('.ui-header').css(bgc, $('.station-search').css(bgc));
-    $('.bottom-tips').html(null);
-
-    // change the default date to tomorrow
-    if (!sessionStorage.getItem('departTime')) {
-        var tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        $('#JpSearchMonthWeek').text(tomorrow.kxString());
+    default:
+        return;
     }
 
-    var trainTypes = $('#traintypelist');
-    if (!trainTypes.length) {  // not the index page
-        return main();
-    }
-    var option = trainTypes.children().last();
-    trainTypes.empty();
-    var types = {
-        QB: '全部',
-        GDC: '动车',
-        Z: '直特',
-        T: '特快',
-        K: '快速',
-        QT: '其他',
-    };
-    for (var key in types) {
-        option = option.clone().attr('data-value', key).text(types[key]);
-        trainTypes.append(option);
-    }
-    selectTrainType(trainTypes.children()[1]);
+    $('.bottom-tips').empty();
+
+    // choose a sane background color for the station picker
+    $('.ui-header').addClass('top-prompt-contain');
+
+    $('.footerNav>:nth-child(3)>a').
+        text('扫码查询').
+        removeAttr('href').
+        click(function () {
+            moerail.startQRCodeScanner();
+        });
 }
 
 customize();

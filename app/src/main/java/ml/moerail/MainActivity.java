@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -42,21 +43,28 @@ public class MainActivity extends Activity {
             }
         });
         webView.setWebChromeClient(new WebChromeClient());
+        webView.addJavascriptInterface(this, "moerail");
         WebSettings settings = webView.getSettings();
         String userAgent = " Moerail/" + BuildConfig.VERSION_NAME;
         settings.setUserAgentString(settings.getUserAgentString() + userAgent);
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
+        settings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
 
-        webView.loadUrl("https://mobile.12306.cn/weixin");
+        webView.loadUrl("https://mobile.12306.cn/weixin/wxcore/init?type=null");
+    }
+
+    @JavascriptInterface
+    public void startQRCodeScanner() {
+        Intent intent = new Intent(this, CaptureActivity.class);
+        intent.putExtra(KEY_IS_QR_CODE, true);
+        startActivityForResult(intent, REQUEST_CODE_SCAN);
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-            Intent intent = new Intent(this, CaptureActivity.class);
-            intent.putExtra(KEY_IS_QR_CODE, true);
-            startActivityForResult(intent, REQUEST_CODE_SCAN);
+            startQRCodeScanner();
             return true;
         }
         if (keyCode != KeyEvent.KEYCODE_BACK) {  // ignore other keys
