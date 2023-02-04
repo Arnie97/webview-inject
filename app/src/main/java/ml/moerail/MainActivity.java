@@ -28,6 +28,7 @@ public class MainActivity extends Activity {
     private static final String LOG_TAG_SCANNER = "scanner";
 
     private WebView webView;
+    private String qrCode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +60,11 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, CaptureActivity.class);
         intent.putExtra(KEY_IS_QR_CODE, true);
         startActivityForResult(intent, REQUEST_CODE_SCAN);
+    }
+
+    @JavascriptInterface
+    public String getQRCodeResult() {
+        return qrCode;
     }
 
     @Override
@@ -104,14 +110,13 @@ public class MainActivity extends Activity {
             try {
                 int year = Calendar.getInstance().get(Calendar.YEAR);
                 byte[] decodedBytes = AESEncrypt.tkdecode(getApplicationContext(), text, year);
-                text = new String(decodedBytes, 0, decodedBytes.length, "gb18030");
-                Log.d(LOG_TAG_SCANNER, text);
+                text = text + "-" + new String(decodedBytes, 0, decodedBytes.length, "gb18030");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        final String js = String.format("printTicketInfo('%s');", text);
-        webView.evaluateJavascript(js, null);
+        qrCode = text;
+        webView.evaluateJavascript("explainQRCode(moerail.getQRCodeResult());", null);
     }
 
     @Override

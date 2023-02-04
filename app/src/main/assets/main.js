@@ -114,22 +114,6 @@ function goBack() {
     return backButton.click().length;
 }
 
-function printTicketInfo(info) {
-    if (info && info.length >= 110) {
-        var delimiters = [
-            00, 00, 07, 10, 13,
-            16, 16, 24, 26, 27, 29,
-            33, 33, 38, 46, 47, 49,
-            50, 50, 60,
-            68, 68, 70, 72, 90, -7
-        ];
-        info = delimiters.map(function(element, index, array) {
-            return info.slice(array[index], array[index+1]) || '<hr>';
-        }).join(' ');
-    }
-    $('.bottom-tips').html(info);
-}
-
 // Optimize page layouts
 function customize() {
     var page = location.pathname.match(/\w+$/) || [];
@@ -163,7 +147,11 @@ function customize() {
             var tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             $('#JpSearchMonthWeek').text(tomorrow.kxString());
-            $('#J_no').val('24000000G10I');
+            $('#J_no').val(function (_, value) {
+                if (value == '24000000G10G') {
+                    return value.slice(0, -1) + 'I';
+                }
+            });
         }
         break;
 
@@ -171,7 +159,8 @@ function customize() {
     case 'qssj':
         $('<iframe>').
             attr('src', 'ysqcx').
-            addClass('ui-header').
+            css('border', 'none').
+            width('100%').
             height(200).
             insertBefore('.query-page>:first-child').
             on('load', function() {
@@ -215,6 +204,26 @@ function customize() {
         click(function () {
             moerail.startQRCodeScanner();
         });
+}
+
+// Submit unknown QR codes to the server and render the results
+function explainQRCode(qrCode) {
+    var explain = $('<div>').
+        addClass('ui-section').
+        css('padding', 16).
+        text(qrCode);
+
+    if (/^\d{144}-/.test(qrCode)) {
+        explain = $('<iframe allowtransparency>').
+            attr('src', 'https://moerail.ml/ticket/#' + qrCode).
+            css('border', 'none').
+            width('100%').
+            height(270);
+    }
+
+    return explain.
+        insertAfter('.query-page>article>:last-child')[0].
+        scrollIntoView();
 }
 
 customize();
