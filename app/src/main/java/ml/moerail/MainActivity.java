@@ -77,10 +77,6 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-            startQRCodeScanner();
-            return true;
-        }
         if (keyCode != KeyEvent.KEYCODE_BACK) {  // ignore other keys
             return super.onKeyDown(keyCode, event);
         }
@@ -114,16 +110,16 @@ public class MainActivity extends Activity {
 
     private void showResult(String text) {
         Log.d(LOG_TAG_SCANNER, text);
+        qrCode = text;
         if (TextUtils.isDigitsOnly(text) && text.length() == 144) {
             try {
                 int year = Calendar.getInstance().get(Calendar.YEAR);
                 byte[] decodedBytes = AESEncrypt.tkdecode(getApplicationContext(), text, year);
-                text = text + "-" + new String(decodedBytes, 0, decodedBytes.length, "gb18030");
+                qrCode = text + "-" + new String(decodedBytes, 0, decodedBytes.length, "gb18030");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        qrCode = text;
         webView.evaluateJavascript("explainQRCode(moerail.getQRCodeResult());", null);
     }
 

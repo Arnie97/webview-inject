@@ -1,10 +1,15 @@
 var colors = [
-    ['#F80', /CRH6/],
+    ['#F70', /6A/],
+    ['#E58', /6F-?A/],
+    ['#F10', /Z/],
     ['#C01', /AF/],
     ['#C84', /BF/],
-    ['#080', /J/],
-    ['#39d', /CR/],
+    ['#080', /0J/],
+    ['#39D', /CR/],
 ];
+
+// Cache-Control: max-age=3600, overrides WebSettings.LOAD_CACHE_ELSE_NETWORK
+var cacheControl = '?t=' + new Date().toISOString().slice(0, 13);
 
 // Patch items on the list page
 function showTrainModel(node, info) {
@@ -20,6 +25,31 @@ function showTrainModel(node, info) {
     });
 }
 
+// Create a table with header cells
+function tableHeader() {
+    var header = $('<tr>');
+    [].slice.call(arguments).forEach(function(text) {
+        $('<th>').text(text).appendTo(header);
+    });
+    return $('<table>').
+        css('width', '100%').
+        append($('<thead>').append(header));
+}
+
+// Add hyphens properly
+function formatTrainModel(info) {
+    [
+        /^(\w+)(\d{4})$/,
+        /^(\w+F)(\w+-\d{4})$/,
+    ].forEach(function(regExp) {
+        var match = info.emu_no.match(regExp);
+        if (match) {
+            info.emu_no = match[1] + "-" + match[2];
+        }
+    });
+    return info;
+}
+
 // Patch items on the details page
 function showTrainDetails() {
     showTerminalStations();
@@ -28,28 +58,22 @@ function showTrainDetails() {
         return;
     }
 
-    var url = 'https://api.moerail.ml/train/' + trainNumber;
+    var url = 'https://api.moerail.ml/train/' + trainNumber + cacheControl;
     $.getJSON(url, function(results) {
-        var tableCell = function(text) {
-            return $('<div>').addClass('TnListTx_1').text(text).css('padding-left', '7px');
-        };
-        var table = $('<ul>').addClass('TnListInfo').append(
-            $('<li>').addClass('TnListHd').append(
-                tableCell('日期'),
-                tableCell('车底'))).appendTo('.detail-scroller');
+        var table = tableHeader('日期', '车底').
+            appendTo('.detail-scroller');
+        styleCopy(table, '.TnListInfo li', 'line-height');
+        styleCopy(table.children(), '.TnListInfo li.TnListHd', 'background', 'border');
 
         results.forEach(function(info) {
-            var match = info.emu_no.match(/^(\w+)(\d{4})$/);
-            if (match) {
-                info.emu_no = match[1] + "-" + match[2];
-            }
-
+            formatTrainModel(info);
             var url = 'https://moerail.ml/#' + info.emu_no;
-            $('<li>').addClass('TnListLiTx').append(
-                tableCell(info.date),
-                $('<a>').attr('href', url).append(tableCell(info.emu_no))
+            $('<tr>').append(
+                $('<td>').text(info.date),
+                $('<td>').append($('<a>').attr('href', url).text(info.emu_no)),
             ).appendTo(table);
         });
+        $('td,th').css('padding', '0 30px');
 
         if (results.length) {
             $('.-detail-title').text(trainNumber + ' (' + results[0].emu_no + ')');
@@ -85,14 +109,14 @@ function checkPage(trainList) {
 
     popLoading();
 
-    var url = 'https://api.moerail.ml/train/,' + trainNumbers.join(',');
+    var url = 'https://api.moerail.ml/train/,' + trainNumbers.join(',') + cacheControl;
     $.getJSON(url, function(results) {
         console.log('EMU Tools: ' + results.length + '/' + trainNumbers.length + ' found');
 
         // Convert array to map
         var trains = {};
         results.forEach(function(info) {
-            trains[info.train_no] = info;
+            trains[info.train_no] = formatTrainModel(info);
         });
 
         trainNodes.each(function(index, node) {
@@ -112,6 +136,19 @@ function goBack() {
         return this.clientWidth;
     });
     return backButton.click().length;
+}
+
+// Copy stylesheets from src to dest
+function styleCopy(dest, src) {
+    if ('string' === typeof dest) {
+        dest = $(dest);
+    }
+    if ('string' === typeof src) {
+        src = $(src);
+    }
+    [].slice.call(arguments).forEach(function(key) {
+        dest.css(key, src.css(key));
+    });
 }
 
 // Optimize page layouts
@@ -175,6 +212,9 @@ function customize() {
 
     case 'detail':
     case 'showcc':
+        // fix the weird hidden button
+        $('.ChmoreBtn').parent().height('auto');
+
         var details = $('.TnListInfo');
         $('.ticket-line').each(showTrainDetails);
         var observer = new MutationObserver(function() {
@@ -226,8 +266,53 @@ function customize() {
 function explainQRCode(qrCode) {
     var explain = $('<div>').
         addClass('ui-section').
-        css('padding', 16).
+        css({'padding': 16, 'line-height': 1.5}).
         text(qrCode);
+
+    var message = $('<div>').appendTo(explain);
+    var ajaxSettings = {
+        type: 'POST',
+        url: 'https://api.moerail.ml/emu/@/qr',
+        data: JSON.stringify({url: qrCode}),
+        contentType: false,
+        beforeSend: popLoading,
+        complete: cancelLoading,
+        success: function(results) {
+            if (results.length === 0) {
+                message.css('content', '查询成功，未找到相关信息');
+                return;
+            }
+
+            var table = tableHeader('日期', '车次').appendTo(message);
+            results.forEach(function(info) {
+                var url = 'https://moerail.ml/#' + info.train_no;
+                $('<tr>').append(
+                    $('<td>').text(info.date),
+                    $('<td>').append($('<a>').attr('href', url).text(info.train_no)),
+                ).appendTo(table);
+            });
+            $('<div>').
+                text(formatTrainModel(results[0]).emu_no).
+                css({'font-size': '18px', 'font-weight': 'bold'}).
+                insertBefore(table)[0].
+                scrollIntoView();
+        },
+        error: function(_, textStatus) {
+            message.
+                css('content', '查询失败，点此重试：' + textStatus).
+                click(function(event) {
+                    var prev = $(event.target).parent();
+                    explainQRCode(prev.text());
+                    prev.remove();
+                });
+        },
+    };
+    try {
+        $.ajax(ajaxSettings);
+    } catch (e) {
+        cancelLoading();
+        ajaxSettings.error(null, e);
+    }
 
     if (/^\d{144}-/.test(qrCode)) {
         explain = $('<iframe allowtransparency>').
