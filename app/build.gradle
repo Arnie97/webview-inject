@@ -4,10 +4,10 @@ android {
     compileSdkVersion 33
     defaultConfig {
         applicationId "ml.moerail"
-        minSdkVersion 19
-        targetSdkVersion 22
+        minSdkVersion 21
+        targetSdkVersion 33
         versionCode 6
-        versionName "2023.02.04"
+        versionName "2023.02.05"
         ndk {
             abiFilters "armeabi-v7a"
         }
@@ -25,5 +25,10 @@ android {
 }
 
 dependencies {
-    implementation "com.king.zxing:zxing-lite:1.1.9"
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'com.github.jenly1314.WeChatQRCode:opencv:1.2.0'
+    implementation 'com.github.jenly1314.WeChatQRCode:opencv-armv7a:1.2.0'
+    implementation 'com.github.jenly1314.WeChatQRCode:wechat-qrcode:1.2.0'
+    implementation 'com.github.jenly1314.WeChatQRCode:wechat-qrcode-scanning:1.2.0'
+    implementation 'com.github.jenly1314.MLKit:mlkit-camera-core:1.0.3'
 }

@@ -15,8 +15,6 @@ import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 
 import com.androidyuan.aesjni.AESEncrypt;
-import com.king.zxing.CaptureActivity;
-import com.king.zxing.Intents;
 
 import java.io.IOException;
 import java.util.Calendar;
@@ -25,8 +23,6 @@ import java.util.Scanner;
 public class MainActivity extends Activity {
     public static final int REQUEST_CODE_SCAN = 1;
     public static final int REQUEST_CODE_PHOTO = 2;
-    public static final String KEY_IS_QR_CODE = "key_code";
-    private static final String LOG_TAG_SCANNER = "scanner";
 
     private WebView webView;
     private String qrCode;
@@ -65,8 +61,7 @@ public class MainActivity extends Activity {
 
     @JavascriptInterface
     public void startQRCodeScanner() {
-        Intent intent = new Intent(this, CaptureActivity.class);
-        intent.putExtra(KEY_IS_QR_CODE, true);
+        Intent intent = new Intent(this, CameraScanActivity.class);
         startActivityForResult(intent, REQUEST_CODE_SCAN);
     }
 
@@ -109,7 +104,6 @@ public class MainActivity extends Activity {
     }
 
     private void showResult(String text) {
-        Log.d(LOG_TAG_SCANNER, text);
         qrCode = text;
         if (TextUtils.isDigitsOnly(text) && text.length() == 144) {
             try {
@@ -131,7 +125,7 @@ public class MainActivity extends Activity {
         }
 
         if (requestCode == REQUEST_CODE_SCAN) {
-            showResult(data.getStringExtra(Intents.Scan.RESULT));
+            showResult(data.getStringArrayExtra(CameraScanActivity.INTENT_EXTRA_KEY_SCAN_RESULT)[0]);
         }
     }
 }

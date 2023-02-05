@@ -15,9 +15,9 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.king.zxing.CaptureActivity"
+            android:name="ml.moerail.CameraScanActivity"
             android:exported="true"
-            android:theme="@style/CaptureTheme"/>
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET"/>
