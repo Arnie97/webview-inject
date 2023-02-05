@@ -147,15 +147,18 @@ function customize() {
             var tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             $('#JpSearchMonthWeek').text(tomorrow.kxString());
-            $('#J_no').val(function (_, value) {
-                if (value == '24000000G10G') {
-                    return value.slice(0, -1) + 'I';
-                }
-            });
+
+            // invalidate the outdated default value
+            if ($('#J_no').val() === '24000000G10G') {
+                $('#J_checi').val(null);
+            }
         }
         break;
 
     case 'ysqcx':
+        location.pathname = location.pathname.replace('ysqcx', 'qssj');
+        return;
+
     case 'qssj':
         $('<iframe>').
             attr('src', 'ysqcx').
@@ -190,8 +193,21 @@ function customize() {
         break;
 
     default:
+        if (location.hostname === 'moerail.ml') {
+            $('header,footer').hide();
+        }
         return;
     }
+
+    // Session storage persistence
+    var observer = new MutationObserver(function() {
+        setTimeout(function() {
+            Object.assign(localStorage, sessionStorage);
+        }, 1);
+    });
+    $('#J_depart_code,#J_arrival_code,#J_no').each(function() {
+        observer.observe(this, {attributes: true});
+    });
 
     $('.bottom-tips').empty();
 

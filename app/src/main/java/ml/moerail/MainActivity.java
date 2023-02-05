@@ -2,6 +2,7 @@ package ml.moerail;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -38,6 +39,12 @@ public class MainActivity extends Activity {
         webView = findViewById(R.id.webView);
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                webView.evaluateJavascript("Object.assign(sessionStorage, localStorage);", null);
+                super.onPageStarted(view, url, favicon);
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
                 injectScript("main.js");
                 super.onPageFinished(view, url);
@@ -45,6 +52,7 @@ public class MainActivity extends Activity {
         });
         webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(this, "moerail");
+        // webView.setWebContentsDebuggingEnabled(true);
         WebSettings settings = webView.getSettings();
         String userAgent = " Moerail/" + BuildConfig.VERSION_NAME;
         settings.setUserAgentString(settings.getUserAgentString() + userAgent);
