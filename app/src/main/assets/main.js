@@ -154,6 +154,8 @@ function styleCopy(dest, src) {
 // Optimize page layouts
 function customize() {
     var page = location.pathname.match(/\w+$/) || [];
+    var dateStorageKey = 'checi_dt';
+
     switch (page[0]) {
     case 'init':
         var trainTypes = $('#traintypelist');
@@ -176,19 +178,22 @@ function customize() {
                 appendTo(trainTypes);
         }
         selectTrainType(trainTypes.children()[1]);
+        dateStorageKey = 'departTime';
         // fallthrough
 
     case 'initCC':
-        // change the default date to tomorrow
-        if (!sessionStorage.getItem('departTime')) {
-            var tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            $('#JpSearchMonthWeek').text(tomorrow.kxString());
+        if (sessionStorage[dateStorageKey] >= new Date().kxString()) {
+            break;
+        }
 
-            // invalidate the outdated default value
-            if ($('#J_no').val() === '24000000G10G') {
-                $('#J_checi').val(null);
-            }
+        // change the default date to tomorrow
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        $('#JpSearchMonthWeek').text(tomorrow.kxString());
+
+        // invalidate the outdated default value
+        if ($('#J_no').val() === '24000000G10G') {
+            $('#J_checi').val(null);
         }
         break;
 
@@ -242,7 +247,10 @@ function customize() {
     // Session storage persistence
     var observer = new MutationObserver(function() {
         setTimeout(function() {
-            Object.assign(localStorage, sessionStorage);
+            Object.
+                keys(sessionStorage).
+                filter(function(k) { return !/_(result|info)$/.test(k); }).
+                forEach(function(k) { localStorage[k] = sessionStorage[k]; });
         }, 1);
     });
     $('#J_depart_code,#J_arrival_code,#J_no').each(function() {
