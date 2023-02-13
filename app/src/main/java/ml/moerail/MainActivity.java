@@ -3,20 +3,18 @@ package ml.moerail;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.webkit.JavascriptInterface;
-import android.webkit.ValueCallback;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.webkit.WebChromeClient;
+import android.webkit.*;
 
 import com.androidyuan.aesjni.AESEncrypt;
 
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Calendar;
 import java.util.Scanner;
 
@@ -44,6 +42,23 @@ public class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 injectScript("main.js");
                 super.onPageFinished(view, url);
+            }
+
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                if (request.isForMainFrame()) {
+                    return null;
+                }
+                Uri url = request.getUrl();
+                if (!url.getPath().endsWith("station_name.js")) {
+                    return null;
+                }
+                final String rewritten = url.toString().replaceFirst("//mobile\\.12306\\.cn/weixin/", "//kyfw.12306.cn/otn/");
+                try {
+                    URLConnection c = new URL(rewritten).openConnection();
+                    return new WebResourceResponse(c.getContentType(), c.getContentEncoding(), c.getInputStream());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
         webView.setWebChromeClient(new WebChromeClient());
