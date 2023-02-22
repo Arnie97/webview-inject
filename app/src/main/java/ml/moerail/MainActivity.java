@@ -11,6 +11,7 @@ import android.view.KeyEvent;
 import android.webkit.*;
 
 import com.androidyuan.aesjni.AESEncrypt;
+import com.king.mlkit.vision.camera.CameraScan;
 
 import java.io.IOException;
 import java.net.URL;
@@ -19,9 +20,6 @@ import java.util.Calendar;
 import java.util.Scanner;
 
 public class MainActivity extends Activity {
-    public static final int REQUEST_CODE_SCAN = 1;
-    public static final int REQUEST_CODE_PHOTO = 2;
-
     private WebView webView;
     private String qrCode;
 
@@ -77,7 +75,7 @@ public class MainActivity extends Activity {
     @JavascriptInterface
     public void startQRCodeScanner() {
         Intent intent = new Intent(this, CameraScanActivity.class);
-        startActivityForResult(intent, REQUEST_CODE_SCAN);
+        startActivityForResult(intent, RequestCode.CAMERA_SCAN.ordinal());
     }
 
     @JavascriptInterface
@@ -139,8 +137,8 @@ public class MainActivity extends Activity {
             return;
         }
 
-        if (requestCode == REQUEST_CODE_SCAN) {
-            showResult(data.getStringArrayExtra(CameraScanActivity.INTENT_EXTRA_KEY_SCAN_RESULT)[0]);
+        if (requestCode == RequestCode.CAMERA_SCAN.ordinal()) {
+            showResult(data.getStringArrayExtra(CameraScan.SCAN_RESULT)[0]);
         }
     }
 }
