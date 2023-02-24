@@ -5,18 +5,14 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.webkit.*;
 
-import com.androidyuan.aesjni.AESEncrypt;
 import com.king.mlkit.vision.camera.CameraScan;
 
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Calendar;
 import java.util.Scanner;
 
 public class MainActivity extends Activity {
@@ -74,7 +70,7 @@ public class MainActivity extends Activity {
 
     @JavascriptInterface
     public void startQRCodeScanner() {
-        Intent intent = new Intent(this, CameraScanActivity.class);
+        Intent intent = new Intent(this, ScanActivity.class);
         startActivityForResult(intent, RequestCode.CAMERA_SCAN.ordinal());
     }
 
@@ -116,20 +112,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void showResult(String text) {
-        qrCode = text;
-        if (TextUtils.isDigitsOnly(text) && text.length() == 144) {
-            try {
-                int year = Calendar.getInstance().get(Calendar.YEAR);
-                byte[] decodedBytes = AESEncrypt.tkdecode(getApplicationContext(), text, year);
-                qrCode = text + "-" + new String(decodedBytes, 0, decodedBytes.length, "gb18030");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        webView.evaluateJavascript("explainQRCode(moerail.getQRCodeResult());", null);
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -138,7 +120,8 @@ public class MainActivity extends Activity {
         }
 
         if (requestCode == RequestCode.CAMERA_SCAN.ordinal()) {
-            showResult(data.getStringArrayExtra(CameraScan.SCAN_RESULT)[0]);
+            qrCode = data.getStringExtra(CameraScan.SCAN_RESULT);
+            webView.evaluateJavascript("explainQRCode(moerail.getQRCodeResult());", null);
         }
     }
 }

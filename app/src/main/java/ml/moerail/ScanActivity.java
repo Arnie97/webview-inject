@@ -7,12 +7,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.androidyuan.aesjni.AESEncrypt;
 import com.king.mlkit.vision.camera.AnalyzeResult;
 import com.king.wechat.qrcode.WeChatQRCodeDetector;
 import com.king.wechat.qrcode.scanning.WeChatCameraScanActivity;
@@ -21,6 +22,7 @@ import org.opencv.OpenCV;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Calendar;
 import java.util.List;
 
 enum RequestCode {
@@ -28,9 +30,7 @@ enum RequestCode {
     GALLERY_SCAN
 }
 
-public class CameraScanActivity extends WeChatCameraScanActivity implements View.OnTouchListener {
-    private static final String LOG_TAG_SCANNER = "scanner";
-
+public class ScanActivity extends WeChatCameraScanActivity implements View.OnTouchListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,8 +69,16 @@ public class CameraScanActivity extends WeChatCameraScanActivity implements View
         }
 
         getCameraScan().setAnalyzeImage(false);
-        Log.d(LOG_TAG_SCANNER, result.toString());
-        String[] text = result.toArray(new String[0]);
+        String text = result.get(0);
+        if (TextUtils.isDigitsOnly(text) && text.length() == 144) {
+            try {
+                int year = Calendar.getInstance().get(Calendar.YEAR);
+                byte[] decodedBytes = AESEncrypt.tkdecode(getApplicationContext(), text, year);
+                text += "-" + new String(decodedBytes, 0, decodedBytes.length, "gb18030");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         Intent intent = new Intent();
         intent.putExtra(CameraScan.SCAN_RESULT, text);

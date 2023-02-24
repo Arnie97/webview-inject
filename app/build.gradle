@@ -7,7 +7,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 33
         versionCode 6
-        versionName "2023.02.13"
+        versionName "2023.02.25"
         ndk {
             abiFilters "armeabi-v7a"
         }

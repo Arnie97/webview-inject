@@ -15,7 +15,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="ml.moerail.CameraScanActivity"
+            android:name="ml.moerail.ScanActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
