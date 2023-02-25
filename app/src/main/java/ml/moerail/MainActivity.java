@@ -10,9 +10,11 @@ import android.webkit.*;
 
 import com.king.mlkit.vision.camera.CameraScan;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
-import java.net.URLConnection;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class MainActivity extends Activity {
@@ -38,20 +40,43 @@ public class MainActivity extends Activity {
                 super.onPageFinished(view, url);
             }
 
+            @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 if (request.isForMainFrame()) {
                     return null;
                 }
+
                 Uri url = request.getUrl();
-                if (!url.getPath().endsWith("station_name.js")) {
+                final String fileName = "station_name.js";
+                if (!url.getPath().endsWith(fileName)) {
                     return null;
                 }
-                final String rewritten = url.toString().replaceFirst("//mobile\\.12306\\.cn/weixin/", "//kyfw.12306.cn/otn/");
+
+                // Download the replaced resource to local cache
+                final File cacheFile = new File(getCacheDir(), fileName);
+                if (!cacheFile.canRead()) {
+                    final String rewritten = url.toString().replaceFirst("//mobile\\.12306\\.cn/weixin/", "//kyfw.12306.cn/otn/");
+                    try {
+                        InputStream iStream = new URL(rewritten).openStream();
+                        ReadableByteChannel chan = Channels.newChannel(iStream);
+                        FileOutputStream oStream = new FileOutputStream(cacheFile);
+                        oStream.getChannel().transferFrom(chan, 0, Long.MAX_VALUE);
+                        oStream.close();
+                        chan.close();
+                    } catch (IOException ignored) {
+                        return null;
+                    }
+                }
+
+                // Generate response from local cache
+                final String
+                        encoding = StandardCharsets.UTF_8.name(),
+                        mimeType = MimeTypeMap.getFileExtensionFromUrl(fileName);
                 try {
-                    URLConnection c = new URL(rewritten).openConnection();
-                    return new WebResourceResponse(c.getContentType(), c.getContentEncoding(), c.getInputStream());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    FileInputStream iStream = new FileInputStream(cacheFile);
+                    return new WebResourceResponse(mimeType, encoding, iStream);
+                } catch (IOException ignored) {
+                    return null;
                 }
             }
         });
