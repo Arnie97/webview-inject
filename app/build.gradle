@@ -26,6 +26,8 @@ android {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.0.2'
+    // docker run --pids-limit -1 --security-opt seccomp=unconfined --rm -it saschpe/android-ndk:31_30.0.3_jdk11.0.11_9_ndk22.1.7171670_cmake3.18.1 sh
+    // opencv/platforms/android/build_sdk.py --sdk_path=/opt/android-sdk-linux --no_samples_build --modules_list=java,wechat_qrcode --extra_modules_path=opencv_contrib/modules
     implementation 'com.github.jenly1314.WeChatQRCode:opencv:1.2.0'
     implementation 'com.github.jenly1314.WeChatQRCode:opencv-armv7a:1.2.0'
     implementation 'com.github.jenly1314.WeChatQRCode:wechat-qrcode:1.2.0'
