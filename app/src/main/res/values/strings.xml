@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">动车组查询</string>
+    <string name="image_picker_hint">单击可选取相册图片</string>
+    <string name="qr_code_not_found">未找到二维码</string>
 </resources>

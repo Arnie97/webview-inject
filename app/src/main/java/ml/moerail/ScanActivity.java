@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -38,6 +39,7 @@ public class ScanActivity extends WeChatCameraScanActivity implements View.OnTou
         WeChatQRCodeDetector.init(this);
         getCameraScan().setPlayBeep(true).setVibrate(true);
         previewView.setOnTouchListener(this);
+        Toast.makeText(this, R.string.image_picker_hint, Toast.LENGTH_SHORT).show();
     }
 
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -65,6 +67,7 @@ public class ScanActivity extends WeChatCameraScanActivity implements View.OnTou
 
     public void onScanResultCallback(List<String> result) {
         if (result.isEmpty()) {
+            Toast.makeText(this, R.string.qr_code_not_found, Toast.LENGTH_SHORT).show();
             return;
         }
 

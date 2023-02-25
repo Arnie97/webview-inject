@@ -33,7 +33,7 @@ function tableHeader() {
     });
     return $('<table>').
         css('width', '100%').
-        append($('<thead>').append(header));
+        prepend($('<thead>').css('line-height', 2.5).append(header));
 }
 
 // Add hyphens properly
@@ -60,7 +60,7 @@ function showTrainDetails() {
 
     var url = 'https://api.moerail.ml/train/' + trainNumber + cacheControl;
     $.getJSON(url, function(results) {
-        var table = tableHeader('日期', '车底').
+        var table = tableHeader('日期', '车组号').
             appendTo('.detail-scroller');
         styleCopy(table, '.TnListInfo li', 'line-height');
         styleCopy(table.children(), '.TnListInfo li.TnListHd', 'background', 'border');
@@ -271,13 +271,14 @@ function customize() {
 }
 
 // Submit unknown QR codes to the server and render the results
-function explainQRCode(qrCode) {
-    var explain = $('<div>').
-        addClass('ui-section').
-        css({'padding': 16, 'line-height': 1.5}).
-        text(qrCode);
-
-    var message = $('<div>').appendTo(explain);
+function explainQRCode(qrCode, explain) {
+    if (!explain) {
+        explain = $('<div>').
+            text(qrCode).
+            addClass('ui-section').
+            css({'padding': 16, 'line-height': 1.5, 'word-break': 'break-word'});
+    }
+    var message = $('<div>').css('line-height', 2.5).appendTo(explain);
     var ajaxSettings = {
         type: 'POST',
         url: 'https://api.moerail.ml/emu/@/qr',
@@ -287,31 +288,31 @@ function explainQRCode(qrCode) {
         complete: cancelLoading,
         success: function(results) {
             if (results.length === 0) {
-                message.css('content', '查询成功，未找到相关信息');
+                message.text('查询完成，未找到动车组运用信息');
                 return;
             }
 
-            var table = tableHeader('日期', '车次').appendTo(message);
+            var tbody = $('<tbody>').
+                css('line-height', 1.5).
+                appendTo(tableHeader('日期', '车次').appendTo(message));
             results.forEach(function(info) {
                 var url = 'https://moerail.ml/#' + info.train_no;
                 $('<tr>').append(
                     $('<td>').text(info.date),
                     $('<td>').append($('<a>').attr('href', url).text(info.train_no)),
-                ).appendTo(table);
+                ).appendTo(tbody);
             });
             $('<div>').
                 text(formatTrainModel(results[0]).emu_no).
                 css({'font-size': '18px', 'font-weight': 'bold'}).
-                insertBefore(table)[0].
+                prependTo(explain)[0].
                 scrollIntoView();
         },
-        error: function(_, textStatus) {
+        error: function(_, textStatus, errorThrown) {
             message.
-                css('content', '查询失败，点此重试：' + textStatus).
-                click(function(event) {
-                    var prev = $(event.target).parent();
-                    explainQRCode(prev.text());
-                    prev.remove();
+                text('查询失败（' + (errorThrown || textStatus) + '），点此重试').
+                click(function() {
+                    explainQRCode(qrCode, $(this).parent().text(qrCode));
                 });
         },
     };
@@ -322,7 +323,7 @@ function explainQRCode(qrCode) {
         ajaxSettings.error(null, e);
     }
 
-    if (/^\d{144}-/.test(qrCode)) {
+    if (/^\d{144}-\w{16}.{8}\w{66}.{10,20}\d{7}$|^[A-Z]\d{10,13}[A-Z]\d{6}$/.test(qrCode)) {
         explain = $('<iframe allowtransparency>').
             attr('src', 'https://moerail.ml/ticket/#' + qrCode).
             css('border', 'none').
