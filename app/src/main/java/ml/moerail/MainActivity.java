@@ -15,6 +15,7 @@ import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.Scanner;
 
 public class MainActivity extends Activity {
@@ -63,7 +64,8 @@ public class MainActivity extends Activity {
                         oStream.getChannel().transferFrom(chan, 0, Long.MAX_VALUE);
                         oStream.close();
                         chan.close();
-                    } catch (IOException ignored) {
+                    } catch (Exception ignored) {
+                        cacheFile.delete();
                         return null;
                     }
                 }
@@ -124,14 +126,17 @@ public class MainActivity extends Activity {
         return true;
     }
 
-    public String readAssets(String fileName) throws IOException {
+    public Iterator<String> readScript(String fileName) throws IOException {
         Scanner scanner = new Scanner(getAssets().open(fileName));
-        return scanner.useDelimiter("\\Z").next();
+        return scanner.useDelimiter("\n(?=function )");
     }
 
     public void injectScript(String fileName) {
         try {
-            webView.evaluateJavascript(readAssets(fileName), null);
+            Iterator<String> iter = readScript(fileName);
+            while (iter.hasNext()) {
+                webView.evaluateJavascript(iter.next(), null);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
