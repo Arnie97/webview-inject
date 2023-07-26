@@ -1,11 +1,15 @@
 var colors = [
-    ['#F70', /6A/],
-    ['#E58', /6F-?A/],
-    ['#F10', /Z/],
-    ['#C01', /AF/],
-    ['#C84', /BF/],
-    ['#080', /0J/],
-    ['#39D', /CR/],
+    ['#D52', /MTR/],
+    ['#080', /^CR200J/],
+    ['#222', /^CRH(1|380D)/],
+    ['#222', /^CRH2(G|.-?246[0-5])/],
+    ['#E58', /^CRH6F-?A/],
+    ['#F62', /^CRH6/],
+    ['#999', /^CRH380A/],
+    ['#F10', /Z|AF-?C|^CRH3A-?A/],
+    ['#B01', /AF/],
+    ['#B85', /BF|^CRH3A/],
+    ['#39D', /^CRH/],
 ];
 
 var webRoot = 'https://rail.re';
@@ -43,6 +47,7 @@ function tableHeader() {
 function formatTrainModel(info) {
     [
         /^(\w+)(\d{4})$/,
+        /^(\w+A)(A-\d{4})$/,
         /^(\w+F)(\w+-\d{4})$/,
     ].forEach(function(regExp) {
         var match = info.emu_no.match(regExp);
