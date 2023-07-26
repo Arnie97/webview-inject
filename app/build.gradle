@@ -6,8 +6,8 @@ android {
         applicationId "ml.moerail"
         minSdkVersion 21
         targetSdkVersion 33
-        versionCode 7
-        versionName "2023.04.07"
+        versionCode 8
+        versionName "2023.07.26"
         ndk {
             abiFilters "armeabi-v7a"
         }

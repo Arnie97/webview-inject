@@ -8,6 +8,9 @@ var colors = [
     ['#39D', /CR/],
 ];
 
+var webRoot = 'https://rail.re';
+var apiRoot = 'https://api.rail.re';
+
 // Cache-Control: max-age=3600, overrides WebSettings.LOAD_CACHE_ELSE_NETWORK
 var cacheControl = '?t=' + new Date().toISOString().slice(0, 13);
 
@@ -57,7 +60,7 @@ function showTrainDetails() {
         return;
     }
 
-    var url = 'https://api.moerail.ml/train/' + trainNumber + cacheControl;
+    var url = apiRoot + '/train/' + trainNumber + cacheControl;
     $.getJSON(url, function(results) {
         var table = tableHeader('日期', '车组号').
             appendTo('.detail-scroller');
@@ -66,13 +69,13 @@ function showTrainDetails() {
 
         results.forEach(function(info) {
             formatTrainModel(info);
-            var url = 'https://moerail.ml/#' + info.emu_no;
+            var url = webRoot + '/#' + info.emu_no;
             $('<tr>').append(
                 $('<td>').text(info.date),
                 $('<td>').append($('<a>').attr('href', url).text(info.emu_no))
             ).appendTo(table);
         });
-        (innerWidth > 400) && $('td,th').css('padding', '0 30px');
+        (Window.innerWidth > 400) && $('td,th').css('padding', '0 30px');
 
         if (results.length) {
             $('.-detail-title').text(trainNumber + ' (' + results[0].emu_no + ')');
@@ -108,7 +111,7 @@ function checkPage(trainList) {
 
     popLoading();
 
-    var url = 'https://api.moerail.ml/train/,' + trainNumbers.join(',') + cacheControl;
+    var url = apiRoot + '/train/,' + trainNumbers.join(',') + cacheControl;
     $.getJSON(url, function(results) {
         console.log('EMU Tools: ' + results.length + '/' + trainNumbers.length + ' found');
 
@@ -188,7 +191,7 @@ function customize() {
         break;
 
     default:
-        if (location.hostname === 'moerail.ml') {
+        if (location.href.substring(0, location.href.length) === webRoot) {
             $('header,footer').hide();
         }
         return;
@@ -296,7 +299,7 @@ function explainQRCode(qrCode, explain) {
     var message = $('<div>').css('line-height', 2.5).appendTo(explain);
     var ajaxSettings = {
         type: 'POST',
-        url: 'https://api.moerail.ml/emu/@/qr',
+        url: apiRoot + '/emu/@/qr',
         data: JSON.stringify({url: qrCode}),
         contentType: false,
         beforeSend: popLoading,
@@ -331,7 +334,7 @@ function explainQRCodeSuccessCallback(message, results) {
         appendTo(tableHeader('日期', '车次').appendTo(message));
 
     results.forEach(function(info) {
-        var url = 'https://moerail.ml/#' + info.train_no;
+        var url = webRoot + '/#' + info.train_no;
         $('<tr>').append(
             $('<td>').text(info.date),
             $('<td>').append($('<a>').attr('href', url).text(info.train_no))
@@ -359,7 +362,7 @@ function explainQRCodeTicket(qrCode) {
         return;
     }
     return $('<iframe allowtransparency>').
-        attr('src', 'https://moerail.ml/ticket/#' + qrCode).
+        attr('src', webRoot + '/ticket/#' + qrCode).
         css('border', 'none').
         width('100%').
         height(270);
